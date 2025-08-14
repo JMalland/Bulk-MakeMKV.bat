@@ -1,32 +1,37 @@
 @ECHO OFF
+setlocal enabledelayedexpansion
 : makemkvcon -r info iso:"Z:\ISOs\ATTACK_OF_THE_CLONES_disc1.iso"
 
+: Set the configuration file
+set ConfigFile=%~dp0\config-bulk-mkv.bat
 : Set the Input variable to an empty string
 set Input=""
 
-: Declare the folders
-set ISOFolder=""
-set OutputFolder=""
-set CompletedFolder=""
+: Run the configuration file
+call "%ConfigFile%"
 
 :Main
-
 : Check whether ISO folder was configured
 if "%Input%" == "1" set "ISOFolder=%TempFolder%"
 : Check whether Output folder was configured
-else if "%Input%" == "2" set "OutputFolder=%TempFolder%"
+if "%Input%" == "2" set "OutputFolder=%TempFolder%"
 : Check whether Completed folder was configured
-else if "%Input%" == "3" set "CompletedFolder=%TempFolder%"
+if "%Input%" == "3" set "CompletedFolder=%TempFolder%"
 
 : Add extra checks for previous executions (Detect, Scan, Convert) to log found results
 
 : Display the Main Menu
 cls
 echo/
+echo %Input%
+echo %TempFolder%
 echo Welcome to the Bulk MKV converter for MakeMKV!
 echo/
 echo Please configure the folder paths for processing.
-echo NOTE: MKV files will be stored in folders per each ISO. i.e. C:\...\Output\ISO_Filename\*
+echo NOTES:
+echo    MKV files will be stored in folders per each ISO. i.e. C:\...\Output\ISO_Filename\*
+echo    Detected ISO files will be recorded to a text file: %DetectFile%
+echo    Scanned ISO data will be recorded to a text file: %ScanFile%
 echo/
 
 echo/
@@ -42,22 +47,22 @@ echo/
 set /P "Input=Select an option [1,2,3,4,5,6]: "
 
 : Configure folder options (then return to main menu)
-if "!Input!" == "1" (
+if "%Input%" == "1" (
     set TempDescription="ISO storage"
     goto FolderPrompt
 )
-else if "!Input!" == "2" (
+if "%Input%" == "2" (
     set TempDescription="MKV Output"
     goto FolderPrompt
 )
-else if "!Input!" == "3" (
+if "%Input%" == "3" (
     set TempDescription="Completed ISOs"
     goto FolderPrompt
 )
 : Begin processing the files
-else if "!Input!" == "4" goto Detect
-else if "!Input!" == "5" goto Scan
-else if "!Input!" == "6" goto MakeMKV
+if "%Input%" == "4" goto Detect
+if "%Input%" == "5" goto Scan
+if "%Input%" == "6" goto MakeMKV
 
 : User selection was not within the available options
 goto Main
@@ -102,10 +107,53 @@ goto Main
 : Compile list of all ISOs
 :Detect
 
+: Clear the screen
+cls
+
+: Delete the DetectFile if it exists
+if exist "%DetectFile%" (
+    echo/
+    echo Deleting %DetectFile%
+    del %DetectFile%
+    echo Deleted file.
+)
+
+: Create the DetectFile if it doesn't exist
+if not exist "%DetectFile%" (
+    echo\
+    echo Creating %DetectFile%...
+    type nul > "%DetectFile%"
+    echo Successfully created file.
+    echo\
+)
+
+: Go through each ISO file in the ISO storage folder
+for /r %ISOFolder% %%f in (*.iso) do (
+    echo %%f >> %DetectFile%
+)
+
+: Count the number of lines in %DetectFile%
+for /f "tokens=*" %%f in ('"find /v "" /c < %DetectFile%"') do (
+    set FoundISOs=%%f
+)
+
+echo Found %FoundISOs% ISO files.
+
+pause
+
 goto Main
 
 : Scan all ISOs for their titles and such
 :Scan
+
+: Create the ScanFile if it doesn't exist
+if not exist "%ScanFile%" (
+    echo\
+    echo Creating %ScanFile%...
+    type nul > "%ScanFile%"
+    echo Successfully created %ScanFile%
+    echo\
+)
 
 goto Main
 
@@ -115,4 +163,15 @@ goto Main
 goto ExitBatch
 
 :ExitBatch
+
+: Re-Write configuration file
+(
+    echo set ISOFolder=%ISOFolder%
+    echo set OutputFolder=%OutputFolder%
+    echo set CompletedFolder=%CompletedFolder%
+    echo\
+    echo set DetectFile="%%~dp0/detected_isos.txt"
+    echo set ScanFile="%%~dp0/scanned_isos.txt"
+) > "%ConfigFile%"
+
 endlocal
