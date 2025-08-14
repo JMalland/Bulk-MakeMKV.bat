@@ -1,3 +1,4 @@
+@ECHO OFF
 : makemkvcon -r info iso:"Z:\ISOs\ATTACK_OF_THE_CLONES_disc1.iso"
 
 : Set the Input variable to an empty string
@@ -6,16 +7,18 @@ set Input=""
 : Declare the folders
 set ISOFolder=""
 set OutputFolder=""
-set "CompletedFolder=""
+set CompletedFolder=""
 
 :Main
 
 : Check whether ISO folder was configured
-if "!Input!" == "1" set "ISOFolder=!TempFolder!"
+if "%Input%" == "1" set "ISOFolder=%TempFolder%"
 : Check whether Output folder was configured
-else if "!Input!" == "2" set "OutputFolder=!TempFolder!"
+else if "%Input%" == "2" set "OutputFolder=%TempFolder%"
 : Check whether Completed folder was configured
-else if "!Input!" == "3" set "CompletedFolder=!TempFolder!"
+else if "%Input%" == "3" set "CompletedFolder=%TempFolder%"
+
+: Add extra checks for previous executions (Detect, Scan, Convert) to log found results
 
 : Display the Main Menu
 cls
@@ -27,14 +30,16 @@ echo NOTE: MKV files will be stored in folders per each ISO. i.e. C:\...\Output\
 echo/
 
 echo/
-echo "1) ISO folder: \"!ISOFolder!\""
-echo "2) Output folder: \"!OutputFolder!\""
-echo "3) Completed folder \"!CompletedFolder!\""
-echo "4) Run Program"
+echo 1) ISO folder: %ISOFolder%
+echo 2) Output folder: %OutputFolder%
+echo 3) Completed folder %CompletedFolder%
+echo 4) Detect ISOs
+echo 5) Scan ISOs
+echo 6) Convert ISOs
 echo/
 
 : Prompt user for option selection
-set /P "Input=Select an option [1,2,3,4]: "
+set /P "Input=Select an option [1,2,3,4,5,6]: "
 
 : Configure folder options (then return to main menu)
 if "!Input!" == "1" (
@@ -49,17 +54,19 @@ else if "!Input!" == "3" (
     set TempDescription="Completed ISOs"
     goto FolderPrompt
 )
-else if "!Input!" == "4" (
-    goto Execute
-)
+: Begin processing the files
+else if "!Input!" == "4" goto Detect
+else if "!Input!" == "5" goto Scan
+else if "!Input!" == "6" goto MakeMKV
+
 : User selection was not within the available options
-else goto Main
+goto Main
 
 : FolderPrompt function taken from https://stackoverflow.com/questions/41645811/how-to-ask-user-of-batch-file-for-a-folder-name-path
 :FolderPrompt
 cls
 echo/
-echo "Please type the !TempDescription! folder path and press ENTER."
+echo Please type the %TempDescription% folder path and press ENTER.
 echo/
 echo Or alternatively drag ^& drop the folder from Windows
 echo Explorer on this console window and press ENTER.
@@ -70,23 +77,23 @@ set TempFolder=""
 : Prompt for a file path to be entered
 set /P "TempFolder=Path: "
 : Remove double quotes from TempFolder value
-set "TempFolder=!TempFolder:"=!"
+set "TempFolder=%TempFolder:"=%"
 : Check against empty string
-if "!TempFolder!" == "" goto FolderPrompt
+if "%TempFolder%" == "" goto FolderPrompt
 : Substitute '/' with '\' for Windows path structure
-set "TempFolder=!TempFolder:/=\!"
+set "TempFolder=%TempFolder:/=\%"
 : Ensure last character is not '\'
-if "!TempFolder:~-1!" == "\" set "TempFolder=!TempFolder:~0,-1!"
+if "%TempFolder:~-1%" == "\" set "TempFolder=%TempFolder:~0,-1%"
 : Check against empty string
-if "!TempFolder!" == "" goto FolderPrompt
+if "%TempFolder%" == "" goto FolderPrompt
 echo/
 
-: Check that the Folder exists (not empty)
-if not exist "!TempFolder!\*" (
-    echo There is no folder "!TempFolder!\".
+: Check that the Folder exists
+if not exist "%TempFolder%\" (
+    echo There is no folder "%TempFolder%\".
     echo/
     choice /C YN /M "Do you want to enter the path once again "
-    if errorlevel 2 goto ExitBatch
+    if errorlevel 2 goto Main
     goto FolderPrompt
 )
 : Return to the main menu, for configuration & execution
@@ -106,9 +113,6 @@ goto Main
 :MakeMKV
 
 goto ExitBatch
-
-
-
 
 :ExitBatch
 endlocal
