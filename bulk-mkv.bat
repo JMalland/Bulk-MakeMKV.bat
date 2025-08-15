@@ -244,7 +244,7 @@ if exist "%OutputFolder%\%TempISO%\*" (
 
 : Create the MKV output directory if it doesn't exist
 if not exist "%OutputFolder%\%TempISO%" (
-    mkdir %OutputFolder%\%TempISO%
+    mkdir "%OutputFolder%\%TempISO%"
     echo Created output folder: '%OutputFolder%\%TempISO%'
 )
 
