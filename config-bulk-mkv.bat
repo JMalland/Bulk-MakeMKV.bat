@@ -1,6 +1,6 @@
-set ISOFolder="Z:\ISOs"
-set OutputFolder="Z:\MKV"
-set CompletedFolder="Z:\Processed"
+set ISOFolder=
+set OutputFolder=
+set CompletedFolder=
 
-set DetectFile="%~dp0/detected_isos.txt"
-set ScanFile="%~dp0/scanned_isos.txt"
+set DetectFile="%~dp0detected_isos.txt"
+set ScanFile="%~dp0scanned_isos.txt"
