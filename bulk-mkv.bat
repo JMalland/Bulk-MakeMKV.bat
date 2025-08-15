@@ -39,13 +39,12 @@ echo 1) ISO folder: %ISOFolder%
 echo 2) Output folder: %OutputFolder%
 echo 3) Completed folder %CompletedFolder%
 echo 4) Detect ISOs
-echo 5) Scan ISOs
-echo 6) Convert ISOs
-echo 7) Exit
+echo 5) Convert ISOs
+echo 6) Exit
 echo/
 
 : Prompt user for option selection
-set /P "Input=Select an option [1,2,3,4,5,6,7]: "
+set /P "Input=Select an option [1,2,3,4,5,6]: "
 
 : Configure folder options (then return to main menu)
 if "%Input%" == "1" (
@@ -62,9 +61,8 @@ if "%Input%" == "3" (
 )
 : Begin processing the files
 if "%Input%" == "4" goto Detect
-if "%Input%" == "5" goto Scan
-if "%Input%" == "6" goto Process
-if "%Input%" == "7" goto ExitBatch
+if "%Input%" == "5" goto Process
+if "%Input%" == "6" goto ExitBatch
 
 : User selection was not within the available options
 goto Main
@@ -142,20 +140,6 @@ for /f "tokens=*" %%f in ('"find /v "" /c < %DetectFile%"') do (
 echo Found %FoundISOs% ISO files.
 
 pause
-
-goto Main
-
-: Scan all ISOs for their titles and such
-:Scan
-
-: Create the ScanFile if it doesn't exist
-if not exist "%ScanFile%" (
-    echo\
-    echo Creating %ScanFile%...
-    type nul > "%ScanFile%"
-    echo Successfully created %ScanFile%
-    echo\
-)
 
 goto Main
 
