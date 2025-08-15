@@ -3,4 +3,4 @@ set OutputFolder=
 set CompletedFolder=
 
 set DetectFile="%~dp0detected_isos.txt"
-set ScanFile="%~dp0scanned_isos.txt"
+set ProcessedFile="%~dp0processed_isos.txt"

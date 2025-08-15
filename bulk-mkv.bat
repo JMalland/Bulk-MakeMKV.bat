@@ -25,7 +25,7 @@ echo Please configure the folder paths for processing.
 echo NOTES:
 echo    MKV files will be stored in folders per each ISO. i.e. C:\...\Output\ISO_Filename\*
 echo    Detected ISO files will be recorded to a text file: %DetectFile%
-echo    Scanned ISO data will be recorded to a text file: %ScanFile%
+echo    Converted ISO files will be recorded to a text file: %ProcessedFile%
 echo/
 echo/
 echo 1) Configuration
@@ -168,16 +168,56 @@ for /F "usebackq tokens=* delims=" %%a in (%DetectFile%) do (
 )
 
 : Go through each line in the DetectFile
-for /L %%i in (1,1,%lines%) do (
+: Start at the last line, in case of errors. 
+: Can remove specific processed filenames without issues. 
+for /L %%i in (%lines%,-1,1) do (
     if not "!ISOFilename[%%i]!" == "" (
         : Call the MakeMKV action
-        call :MakeMKV "!ISOFilename[%%i]!"     
+        call :MakeMKV "!ISOFilename[%%i]!"
+
+        : The MakeMKV call was successful
+        if "%errorlevel%" == "0" (
+            : Delete the ISO file from the detected list
+            call :DeleteLine "%DetectFile%" "%%i"
+
+            : Add the ISO file to the processed list
+            echo "!ISOFilename[%%i]!" >> %ProcessedFile%
+            : More Logging
+            echo Added !ISOFilename[%%i]! to %ProcessedFile%
+        )
     )
 )
 
 pause
 
 goto Main
+
+:DeleteLine 
+
+: Information for which file and line to delete
+set "File=%1"
+set "LineToDelete=%2"
+: Temporary filename
+set "TempFile=%File%.tmp"
+
+: Counter to keep track of line numbers
+set /a dLines=0
+: Write the output to the following filename 
+> "%TempFile%" (
+    : Go through each line
+    for /f "usebackq delims=" %%A in ("%File%") do (
+        : Increment the counter
+        set /a dLines+=1
+        : If the counter doesn't match the line to delete, continue
+        if !dLines! neq %LineToDelete% echo(%%A)
+    )
+)
+
+: Move the temporary file to the source file
+move /y "%TempFile%" "%File%" > nul
+
+: Break from the DeleteLine call
+exit /b
 
 :MakeMKV
 : Reset conversion skip
@@ -218,6 +258,8 @@ if "%TempSkip" == "false" (
         : MakeMKV exited with an error
         echo Something went wrong processing %TempISO%.
         pause
+        : Exit with a non-zero error code (same as MakeMKV error)
+        exit /b %errorlevel%
     ) 
     
     if "%errorlevel%" == "0" (
@@ -229,7 +271,7 @@ if "%TempSkip" == "false" (
 )
 
 : Break from the MakeMKV call
-exit /b
+exit /b 0
 
 :ExitBatch
 
@@ -240,7 +282,7 @@ exit /b
     echo set CompletedFolder=%CompletedFolder%
     echo\
     echo set DetectFile="%%~dp0detected_isos.txt"
-    echo set ScanFile="%%~dp0scanned_isos.txt"
+    echo set ProcessedFile="%%~dp0processed_isos.txt"
 ) > "%ConfigFile%"
 
 endlocal
