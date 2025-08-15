@@ -169,7 +169,7 @@ goto Main
 : Reset conversion skip
 set TempSkip="false"
 : Store the ISO name
-set TempISO=%~n1
+set "TempISO=%~n1"
 
 echo\
 echo Handling file: %TempISO%.iso
@@ -189,13 +189,14 @@ if exist "%OutputFolder%\%TempISO%\*" (
 : Create the MKV output directory if it doesn't exist
 if not exist "%OutputFolder%\%TempISO%" (
     mkdir %OutputFolder%\%TempISO%
+    echo Created output folder: '%OutputFolder%\%TempISO%'
 )
 
 : This file should be converted
 if "%TempSkip" == "false" (
     echo Converting %TempISO% to MKV files (stored in '%OutputFolder%\%TempISO%')
-    echo makemkvcon --messages=-null --noscan mkv iso:"%ISOFolder%\%TempISO%.iso" all "%OutputFolder%\%TempISO%"
-    call makemkvcon --messages=-null --noscan mkv iso:"%ISOFolder%\%TempISO%.iso" all "%OutputFolder%\%TempISO%"
+    echo makemkvcon --minlength=120 --messages=-stderr --noscan mkv iso:"%ISOFolder%\%TempISO%.iso" all "%OutputFolder%\%TempISO%"
+    call makemkvcon --minlength=120 --messages=-stderr --noscan mkv iso:"%ISOFolder%\%TempISO%.iso" all "%OutputFolder%\%TempISO%"
     echo Finished converting file.
 
     if not "%errorlevel%" == "0" (
