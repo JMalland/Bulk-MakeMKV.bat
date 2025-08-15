@@ -162,27 +162,27 @@ goto Main
 : Count the number of lines in the DetectFile
 set /a lines=0
 for /F "usebackq tokens=* delims=" %%a in (%DetectFile%) do (
-    echo LINE
     set /a lines+=1
     set "ISOFilename[!lines!]=%%a"     
+    echo !lines!
 )
 
 : Go through each line in the DetectFile
 : Start at the last line, in case of errors. 
 : Can remove specific processed filenames without issues. 
 for /L %%i in (%lines%,-1,1) do (
-    if not "!ISOFilename[%%i]!" == "" (
-        : Call the MakeMKV action
+    if "!ISOFilename[%%i]!" neq "" (
+        rem Call the MakeMKV action
         call :MakeMKV "!ISOFilename[%%i]!"
 
-        : The MakeMKV call was successful
+        rem The MakeMKV call was successful
         if "%errorlevel%" == "0" (
-            : Delete the ISO file from the detected list
+            rem Delete the ISO file from the detected list
             call :DeleteLine "%DetectFile%" "%%i"
 
-            : Add the ISO file to the processed list
+            rem Add the ISO file to the processed list
             echo "!ISOFilename[%%i]!" >> %ProcessedFile%
-            : More Logging
+            rem More Logging
             echo Added !ISOFilename[%%i]! to %ProcessedFile%
         )
     )
@@ -206,9 +206,9 @@ set /a dLines=0
 > "%TempFile%" (
     : Go through each line
     for /f "usebackq delims=" %%A in ("%File%") do (
-        : Increment the counter
+        rem Increment the counter
         set /a dLines+=1
-        : If the counter doesn't match the line to delete, continue
+        rem If the counter doesn't match the line to delete, continue
         if !dLines! neq %LineToDelete% echo(%%A)
     )
 )
