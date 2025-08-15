@@ -41,10 +41,11 @@ echo 3) Completed folder %CompletedFolder%
 echo 4) Detect ISOs
 echo 5) Scan ISOs
 echo 6) Convert ISOs
+echo 7) Exit
 echo/
 
 : Prompt user for option selection
-set /P "Input=Select an option [1,2,3,4,5,6]: "
+set /P "Input=Select an option [1,2,3,4,5,6,7]: "
 
 : Configure folder options (then return to main menu)
 if "%Input%" == "1" (
@@ -62,7 +63,8 @@ if "%Input%" == "3" (
 : Begin processing the files
 if "%Input%" == "4" goto Detect
 if "%Input%" == "5" goto Scan
-if "%Input%" == "6" goto MakeMKV
+if "%Input%" == "6" goto Process
+if "%Input%" == "7" goto ExitBatch
 
 : User selection was not within the available options
 goto Main
@@ -129,7 +131,7 @@ if not exist "%DetectFile%" (
 
 : Go through each ISO file in the ISO storage folder
 for /r %ISOFolder% %%f in (*.iso) do (
-    echo %%f >> %DetectFile%
+    echo %%~nxf >> %DetectFile%
 )
 
 : Count the number of lines in %DetectFile%
@@ -158,9 +160,76 @@ if not exist "%ScanFile%" (
 goto Main
 
 : Convert all ISOs into MKV Files
-:MakeMKV
+:Process
+: Count the number of lines in the DetectFile
+set /a lines=0
+for /F "usebackq tokens=* delims=" %%a in (%DetectFile%) do (
+    echo LINE
+    set /a lines+=1
+    set "ISOFilename[!lines!]=%%a"     
+)
 
-goto ExitBatch
+: Go through each line in the DetectFile
+for /L %%i in (1,1,%lines%) do (
+    if not "!ISOFilename[%%i]!" == "" (
+        : Call the MakeMKV action
+        call :MakeMKV !ISOFilename[%%i]!        
+    )
+)
+
+pause
+
+goto Main
+
+:MakeMKV
+: Reset conversion skip
+set TempSkip="false"
+: Store the ISO name
+set TempISO=%~n1
+
+echo\
+echo Handling file: %TempISO%.iso
+echo\
+
+    : Verify any existing files
+if exist "%OutputFolder%\%TempISO%\*" (
+    : Prompt user to overwrite existing conversion
+    choice /C YN /M "Overwrite existing %TempISO% conversion? "
+
+    : Configure the conversion to be skipped
+    if errorlevel == 2 (
+        set TempSkip="true"
+    )
+)
+
+: Create the MKV output directory if it doesn't exist
+if not exist "%OutputFolder%\%TempISO%" (
+    mkdir %OutputFolder%\%TempISO%
+)
+
+: This file should be converted
+if "%TempSkip" == "false" (
+    echo Converting %TempISO% to MKV files (stored in '%OutputFolder%\%TempISO%')
+    echo makemkvcon --messages=-null --noscan mkv iso:"%ISOFolder%\%TempISO%.iso" all "%OutputFolder%\%TempISO%"
+    call makemkvcon --messages=-null --noscan mkv iso:"%ISOFolder%\%TempISO%.iso" all "%OutputFolder%\%TempISO%"
+    echo Finished converting file.
+
+    if not "%errorlevel%" == "0" (
+        : MakeMKV exited with an error
+        echo Something went wrong processing %TempISO%.
+        pause
+    ) 
+    
+    if "%errorlevel%" == "0" (
+        : Everything went okay, now move the ISO to the CompletedFolder
+        echo Moving %TempISO% to %CompletedFolder%
+        move "%ISOFolder%\%TempISO%.iso" "%CompletedFolder%\%TempISO%.iso"
+        echo Finished moving file.
+    )
+)
+
+: Break from the MakeMKV call
+exit /b
 
 :ExitBatch
 
@@ -170,8 +239,8 @@ goto ExitBatch
     echo set OutputFolder=%OutputFolder%
     echo set CompletedFolder=%CompletedFolder%
     echo\
-    echo set DetectFile="%%~dp0/detected_isos.txt"
-    echo set ScanFile="%%~dp0/scanned_isos.txt"
+    echo set DetectFile="%%~dp0detected_isos.txt"
+    echo set ScanFile="%%~dp0scanned_isos.txt"
 ) > "%ConfigFile%"
 
 endlocal
