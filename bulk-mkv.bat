@@ -249,7 +249,7 @@ if not exist "%OutputFolder%\%TempISO%" (
 )
 
 : This file should be converted
-if "%TempSkip" == "false" (
+if "%TempSkip%" == "false" (
     echo Converting %TempISO% to MKV files (stored in '%OutputFolder%\%TempISO%')
     echo makemkvcon --minlength=120 --messages=-null --progress=-stderr --noscan mkv iso:"%ISOFolder%\%TempISO%.iso" all "%OutputFolder%\%TempISO%"
     call makemkvcon --minlength=120 --messages=-null --progress=-stderr --noscan mkv iso:"%ISOFolder%\%TempISO%.iso" all "%OutputFolder%\%TempISO%"
