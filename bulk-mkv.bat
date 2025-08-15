@@ -205,7 +205,7 @@ set /a dLines=0
 : Write the output to the following filename 
 > "%TempFile%" (
     : Go through each line
-    for /f "usebackq delims=" %%A in ("%File%") do (
+    for /f "usebackq delims=" %%A in (%File%) do (
         rem Increment the counter
         set /a dLines+=1
         rem If the counter doesn't match the line to delete, continue
@@ -250,8 +250,8 @@ if not exist "%OutputFolder%\%TempISO%" (
 : This file should be converted
 if "%TempSkip" == "false" (
     echo Converting %TempISO% to MKV files (stored in '%OutputFolder%\%TempISO%')
-    echo makemkvcon --minlength=120 --messages=-stderr --noscan mkv iso:"%ISOFolder%\%TempISO%.iso" all "%OutputFolder%\%TempISO%"
-    call makemkvcon --minlength=120 --messages=-stderr --noscan mkv iso:"%ISOFolder%\%TempISO%.iso" all "%OutputFolder%\%TempISO%"
+    echo makemkvcon --minlength=120 --messages=-null --progress=-stderr --noscan mkv iso:"%ISOFolder%\%TempISO%.iso" all "%OutputFolder%\%TempISO%"
+    call makemkvcon --minlength=120 --messages=-null --progress=-stderr --noscan mkv iso:"%ISOFolder%\%TempISO%.iso" all "%OutputFolder%\%TempISO%"
     echo Finished converting file.
 
     if not "%errorlevel%" == "0" (
