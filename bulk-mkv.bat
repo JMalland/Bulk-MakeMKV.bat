@@ -178,10 +178,15 @@ for /L %%i in (%lines%,-1,1) do (
 
         rem The MakeMKV call was successful
         if "%errorlevel%" == "0" (
-            rem Delete the ISO file from the detected list
+            rem Everything went okay, now move the ISO to the CompletedFolder
+            echo Moving !ISOFilename[%%i]! to '%CompletedFolder%'
+            move "%ISOFolder%\!ISOFilename[%%i]!" "%CompletedFolder%\!ISOFilename[%%i]!"
+            echo Finished moving file.
+
+            rem Delete the ISO filename from the detected list
             call :DeleteLine "%DetectFile%" "%%i"
 
-            rem Add the ISO file to the processed list
+            rem Add the ISO filename to the processed list
             echo "!ISOFilename[%%i]!" >> %ProcessedFile%
             rem More Logging
             echo Added !ISOFilename[%%i]! to %ProcessedFile%
@@ -222,7 +227,7 @@ exit /b
 
 :MakeMKV
 : Reset conversion skip
-set TempSkip="false"
+set TempSkip=false
 
 : Store the ISO name
 set "TempISO=%~n1"
@@ -238,7 +243,8 @@ if exist "%OutputFolder%\%TempISO%\*" (
 
     : Configure the conversion to be skipped
     if errorlevel == 2 (
-        set TempSkip="true"
+        echo Skipping
+        set TempSkip=true
     )
 )
 
@@ -248,27 +254,23 @@ if not exist "%OutputFolder%\%TempISO%" (
     echo Created output folder: '%OutputFolder%\%TempISO%'
 )
 
-: This file should be converted
-if "%TempSkip%" == "false" (
-    echo Converting %TempISO% to MKV files (stored in '%OutputFolder%\%TempISO%')
-    echo makemkvcon --minlength=120 --messages=-null --progress=-stderr --noscan mkv iso:"%ISOFolder%\%TempISO%.iso" all "%OutputFolder%\%TempISO%"
-    call makemkvcon --minlength=120 --messages=-null --progress=-stderr --noscan mkv iso:"%ISOFolder%\%TempISO%.iso" all "%OutputFolder%\%TempISO%"
-    echo Finished converting file.
+: The file should be skipped
+if "%TempSkip%" == "true" (
+    : Exit the MakeMKV call
+    exit /b 0
+)
 
-    if not "%errorlevel%" == "0" (
-        : MakeMKV exited with an error
-        echo Something went wrong processing %TempISO%.
-        pause
-        : Exit with a non-zero error code (same as MakeMKV error)
-        exit /b %errorlevel%
-    ) 
-    
-    if "%errorlevel%" == "0" (
-        : Everything went okay, now move the ISO to the CompletedFolder
-        echo Moving %TempISO% to %CompletedFolder%
-        move "%ISOFolder%\%TempISO%.iso" "%CompletedFolder%\%TempISO%.iso"
-        echo Finished moving file.
-    )
+echo Converting %TempISO% to MKV files (stored in '%OutputFolder%\%TempISO%')
+echo makemkvcon --minlength=120 --messages=-null --progress=-stderr --noscan mkv iso:"%ISOFolder%\%TempISO%.iso" all "%OutputFolder%\%TempISO%"
+call makemkvcon --minlength=120 --messages=-null --progress=-stderr --noscan mkv iso:"%ISOFolder%\%TempISO%.iso" all "%OutputFolder%\%TempISO%"
+echo Finished converting file.
+
+: Catch any errors from MakeMKV
+if "%errorlevel%" neq "0" (
+    echo Something went wrong processing %TempISO%.
+    pause
+    : Exit with a non-zero error code (same as MakeMKV error)
+    exit /b %errorlevel%
 )
 
 : Break from the MakeMKV call
