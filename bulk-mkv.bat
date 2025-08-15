@@ -11,12 +11,6 @@ set Input=""
 call "%ConfigFile%"
 
 :Main
-: Check whether ISO folder was configured
-if "%Input%" == "1" set "ISOFolder=%TempFolder%"
-: Check whether Output folder was configured
-if "%Input%" == "2" set "OutputFolder=%TempFolder%"
-: Check whether Completed folder was configured
-if "%Input%" == "3" set "CompletedFolder=%TempFolder%"
 
 : Add extra checks for previous executions (Detect, Scan, Convert) to log found results
 
@@ -33,45 +27,65 @@ echo    MKV files will be stored in folders per each ISO. i.e. C:\...\Output\ISO
 echo    Detected ISO files will be recorded to a text file: %DetectFile%
 echo    Scanned ISO data will be recorded to a text file: %ScanFile%
 echo/
-
 echo/
-echo 1) ISO folder: %ISOFolder%
-echo 2) Output folder: %OutputFolder%
-echo 3) Completed folder %CompletedFolder%
-echo 4) Detect ISOs
-echo 5) Convert ISOs
-echo 6) Exit
+echo 1) Configuration
+echo 2) Detect ISOs
+echo 3) Convert ISOs
+echo 4) Exit
 echo/
 
 : Prompt user for option selection
-set /P "Input=Select an option [1,2,3,4,5,6]: "
+set /P "MInput=Select an option [1,2,3,4]: "
 
-: Configure folder options (then return to main menu)
-if "%Input%" == "1" (
-    set TempDescription="ISO storage"
-    goto FolderPrompt
-)
-if "%Input%" == "2" (
-    set TempDescription="MKV Output"
-    goto FolderPrompt
-)
-if "%Input%" == "3" (
-    set TempDescription="Completed ISOs"
-    goto FolderPrompt
-)
-: Begin processing the files
-if "%Input%" == "4" goto Detect
-if "%Input%" == "5" goto Process
-if "%Input%" == "6" goto ExitBatch
+: Go to the configuration menu
+if "%MInput%" == "1" goto Configure 
+: Process the ISO files
+if "%MInput%" == "2" goto Detect
+if "%MInput%" == "3" goto Process
+: Exit the program, and save the configuration file
+if "%MInput%" == "4" goto ExitBatch
 
 : User selection was not within the available options
 goto Main
+
+:Configure
+
+: Check whether ISO folder was configured
+if "%CInput%" == "1" set "ISOFolder=%TempFolder%"
+: Check whether Output folder was configured
+if "%CInput%" == "2" set "OutputFolder=%TempFolder%"
+: Check whether Completed folder was configured
+if "%CInput%" == "3" set "CompletedFolder=%TempFolder%"
+
+cls
+echo/
+echo Welcome to the configuration menu!
+echo/
+echo Here you can configure the input/output folders for using MakeMKV.
+echo/
+echo/
+echo 1) ISO folder: %ISOFolder%
+echo 2) Output folder: %OutputFolder%
+echo 3) Completed folder: %CompletedFolder%
+echo 4) Back to Main Menu
+
+set /P "CInput=Select an option [1,2,3,4]: "
+
+: Configure folder options (then return to configuration menu)
+if "%CInput%" == "1" call :FolderPrompt "ISO storage"
+if "%CInput%" == "2" call :FolderPrompt "MKV Output"
+if "%CInput%" == "3" call :FolderPrompt "Completed ISOs"
+: Exit to Main Menu
+if "%CInput%" == "4" goto Main
+
+: Repeat the configuration menu until a valid option is selected
+goto Configure
 
 : FolderPrompt function taken from https://stackoverflow.com/questions/41645811/how-to-ask-user-of-batch-file-for-a-folder-name-path
 :FolderPrompt
 cls
 echo/
-echo Please type the %TempDescription% folder path and press ENTER.
+echo Please type the %1 folder path and press ENTER.
 echo/
 echo Or alternatively drag ^& drop the folder from Windows
 echo Explorer on this console window and press ENTER.
@@ -98,11 +112,11 @@ if not exist "%TempFolder%\" (
     echo There is no folder "%TempFolder%\".
     echo/
     choice /C YN /M "Do you want to enter the path once again "
-    if errorlevel 2 goto Main
+    if errorlevel 2 goto Configure
     goto FolderPrompt
 )
-: Return to the main menu, for configuration & execution
-goto Main
+: Return to the configuration menu
+goto Configure
 
 : Compile list of all ISOs
 :Detect
@@ -157,7 +171,7 @@ for /F "usebackq tokens=* delims=" %%a in (%DetectFile%) do (
 for /L %%i in (1,1,%lines%) do (
     if not "!ISOFilename[%%i]!" == "" (
         : Call the MakeMKV action
-        call :MakeMKV !ISOFilename[%%i]!        
+        call :MakeMKV "!ISOFilename[%%i]!"     
     )
 )
 
@@ -168,6 +182,7 @@ goto Main
 :MakeMKV
 : Reset conversion skip
 set TempSkip="false"
+
 : Store the ISO name
 set "TempISO=%~n1"
 
