@@ -177,7 +177,7 @@ for /L %%i in (%lines%,-1,1) do (
         call :MakeMKV "!ISOFilename[%%i]!"
 
         rem The MakeMKV call was successful
-        if "%errorlevel%" == "0" (
+        if "!errorlevel!" == "0" (
             rem Everything went okay, now move the ISO to the CompletedFolder
             echo Moving !ISOFilename[%%i]! to '%CompletedFolder%'
             move "%ISOFolder%\!ISOFilename[%%i]!" "%CompletedFolder%\!ISOFilename[%%i]!"
@@ -193,6 +193,8 @@ for /L %%i in (%lines%,-1,1) do (
         )
     )
 )
+
+echo Finished processing all ISOs.
 
 pause
 
