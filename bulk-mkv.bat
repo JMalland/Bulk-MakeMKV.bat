@@ -68,6 +68,7 @@ echo 1) ISO folder: %ISOFolder%
 echo 2) Output folder: %OutputFolder%
 echo 3) Completed folder: %CompletedFolder%
 echo 4) Back to Main Menu
+echo/
 
 set /P "CInput=Select an option [1,2,3,4]: "
 
