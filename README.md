@@ -2,7 +2,9 @@
   This program is my first-ever Batch program, so please excuse any improper programming conventions and bugs. 
   I built it to work to my needs, and so far it has done that.
 
-  This was programmed and tested on Windows 11 and Windows 11 IOT Enterprise
+  The purpose of this program is to allow the bulk conversion of ISO files to MKV, utilizing MakeMKV via command line.
+
+  This was programmed and tested on Windows 11 and Windows 11 IOT Enterprise.
 
 ## Installing
   When downloading the program, make sure `bulk-mkv.bat` and `config-bulk-mkv.bat` are in the same folder. 
